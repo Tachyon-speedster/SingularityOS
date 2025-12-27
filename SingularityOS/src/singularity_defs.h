@@ -1,5 +1,3 @@
-// src/singularity_defs.h
-
 #ifndef SINGULARITY_DEFS_H
 #define SINGULARITY_DEFS_H
 
