@@ -1,6 +1,3 @@
-; src/system.asm
-; Low-level system I/O, CPU control, and Context Switching
-
 section .text
 
 ; --- 1. Port I/O (inb) ---
