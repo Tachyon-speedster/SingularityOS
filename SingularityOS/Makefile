@@ -1,5 +1,3 @@
-# Makefile for SingularityOS - Phase 1 (Keyboard Input Ready)
-
 ARCH := i386
 CC := gcc
 LD := ld
@@ -54,8 +52,7 @@ $(KERNEL_OBJ): $(KERNEL_C) | $(BUILD_DIR)
 
 # --- Linking Rule ---
 
-# Rule to link the object files into the final kernel binary
-# The linker script is specified using -T, and only object files ($OBJECTS) are passed as input.
+
 $(KERNEL_BIN): $(OBJECTS) $(LINKER_SCRIPT)
 	$(LD) -m elf_i386 -T $(LINKER_SCRIPT) -o $@ $(OBJECTS)
 
