@@ -1,15 +1,13 @@
-// src/kernel.c - The SingularityOS Kernel (Final Fixed Version with REAL-TIME CLOCK)
-
 // --- Includes ---
 #include "idt.h" 
 #include "singularity_defs.h" 
 
-// --- Standard Type Definitions (FIXED MISSING TYPES) ---
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-// --- Assembly Helpers Prototypes (Defined in isr.asm)
+// --- Assembly Helpers Prototypes
 extern unsigned char inb(unsigned short port);
 extern void outb(unsigned short port, unsigned char data);
 extern void load_cr3(unsigned int);
@@ -66,7 +64,7 @@ static int cursor_row = 0;
 static int cursor_col = 0;
 static int shift_active = 0; 
 
-// --- Function Prototypes (Forward Declarations) ---
+// --- Function Prototypes ---
 void process_command(); 
 void print_u32_hex(u32 n);
 void clear_screen();
@@ -88,7 +86,7 @@ extern void irq0(); // Timer IRQ 0 Assembly Stub
 extern void irq1(); // Keyboard IRQ 1 Assembly Stub
 
 
-// Simplified US Keyboard Layout Map (Scancode -> ASCII)
+// Simplified US Keyboard Layout Map 
 unsigned char kbd_us[128] =
 { 
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',   
@@ -246,14 +244,14 @@ void read_rtc_time() {
     u8 raw_minutes = get_rtc_register(RTC_MINUTES);
     u8 raw_seconds = get_rtc_register(RTC_SECONDS);
 
-    // BCD to Binary Conversion (if BCD is enabled in Status Register B)
+    // BCD to Binary Conversion 
     if (!(status_b & 0x04)) {
         raw_seconds = (raw_seconds & 0x0F) + ((raw_seconds / 16) * 10);
         raw_minutes = (raw_minutes & 0x0F) + ((raw_minutes / 16) * 10);
         raw_hours = (raw_hours & 0x0F) + ((raw_hours / 16) * 10);
     }
     
-    // Initialize global clock variables with RTC time (This is UTC time)
+    // Initialize global clock variables with RTC time 
     hours = raw_hours;
     minutes = raw_minutes;
     seconds = raw_seconds;
@@ -276,13 +274,13 @@ void read_rtc_time() {
 // --- Timer and Scheduler ---
 
 void timer_install() {
-    // Divisor = 1193180 / 18.222 = 65536 (0xFFFF). Stable PC rate.
+    // Divisor = 1193180 / 18.222 = 65536 (0xFFFF)
     u32 divisor = 65536; 
     
-    // Command Byte: Channel 0, Low/High Byte access, Square Wave Mode (Mode 3), Binary
+    // Command Byte
     outb(PIT_CMD_PORT, 0x36); 
     
-    // Send the divisor (low byte, then high byte)
+    // Send the divisor 
     outb(PIT_DATA_PORT, (unsigned char)(divisor & 0xFF));
     outb(PIT_DATA_PORT, (unsigned char)((divisor >> 8) & 0xFF));
 }
@@ -364,10 +362,10 @@ void idt_install() {
     idt_ptr_reg.limit = (sizeof(struct idt_entry) * 256) - 1;
     idt_ptr_reg.base = (unsigned int)&idt;
 
-    // Timer Interrupt (IRQ 0 = IDT 0x20). Using the stable 0x10 selector.
+    // Timer Interrupt 
     idt_set_gate(0x20, (unsigned int)irq0, 0x10, 0x8E); 
     
-    // Keyboard Interrupt (IRQ 1 = IDT 0x21). Using the stable 0x10 selector.
+    // Keyboard Interrupt
     idt_set_gate(0x21, (unsigned int)irq1, 0x10, 0x8E); 
     
     load_idt(&idt_ptr_reg);
@@ -391,7 +389,7 @@ void pic_remap() {
     outb(PIC2_DATA, 0xFF); 
 }
 
-// --- Paging (Memory Management) Functions ---
+// --- Paging Functions ---
 typedef unsigned int page_entry;
 
 page_entry page_directory[1024] __attribute__((aligned(4096)));
@@ -417,7 +415,7 @@ void setup_paging() {
 }
 
 
-// --- AI Core/System State Initialization and CLI Logic (Standard Code) ---
+// --- AI Core/System State Initialization and CLI Logic ---
 
 void execute_aisci_command(AISCI_Command* cmd) { 
     cmd->success_flag = 0; 
@@ -514,7 +512,7 @@ void process_command() {
 }
 
 
-// --- Kernel Main Entry Point (CRITICAL: Correct Order of Operations) ---
+// --- Kernel Main Entry Point ---
 
 void kernel_main() {
     clear_screen();
@@ -522,7 +520,7 @@ void kernel_main() {
     print_string("AI Core: Offline (Phase 1 Complete)\n");
     print_string("--- Initializing Hardware and Memory ---\n");
 
-    // All hardware and IDT setup must happen before interrupts are enabled (STI)
+    // All hardware and IDT setup must happen before interrupts are enabled
 
     pic_remap();
     timer_install(); 
@@ -530,13 +528,13 @@ void kernel_main() {
     setup_paging(); 
     initialize_ai_structures(); 
 
-    // CRITICAL: Read the real time from RTC hardware and set IST
+    // CRITICAL
     read_rtc_time(); 
     
-    // CRITICAL: Draw the clock UI immediately on boot
+    // CRITICAL
     print_clock_ui(); 
     
-    // Enable interrupts (The timer will now tick the clock forward from the RTC time)
+    // Enable interrupts 
     asm volatile("sti"); 
     
     print_string("--- System Ready (SingularityOS Command Line)\n\n");
